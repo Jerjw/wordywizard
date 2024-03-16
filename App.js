@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import Keyboard from './components/Keyboard';
 import { CLEAR, ENTER, colors, threeLetter, wordList } from './constants';
 import { getRandom4Pics, selectRandomWord } from './utils/random';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const NUMBER_OF_TRIES = 5;
 
@@ -19,12 +20,40 @@ export default function App() {
   const [puzzleShow, setPuzzleShow] = useState('');
   const [gameEngine, setGameEngine] = useState(null);
   const [points, setPoints] = useState(0);
+  const [highPoints, setHighPoints] = useState(0);
   const [letters, setLetters] = useState(selectRandomWord().split(''));
   const [fourPics1Word, setFourPics1Word] = useState(getRandom4Pics());
   const [rows, setRows] = useState(new Array(NUMBER_OF_TRIES).fill(new Array(letters.length).fill('')));
   const [curRow, setCurRow] = useState(0);
   const [curCol, setCurCol] = useState(0);
   const [fourPicText, setFourPicText] = useState('');
+
+  useEffect(() => {
+    const fetchHighScore = async () => {
+      const score = await getHighScore();
+      setHighPoints(score);
+    };
+
+    fetchHighScore();
+  }, []);
+
+  const storeHighScore = async (score) => {
+    try {
+      await AsyncStorage.setItem('highScore', JSON.stringify(score));
+    } catch (error) {
+      console.error('Error storing high score:', error);
+    }
+  };
+
+  const getHighScore = async () => {
+    try {
+      const highScore = await AsyncStorage.getItem('highScore');
+      return highScore ? JSON.parse(highScore) : null;
+    } catch (error) {
+      console.error('Error retrieving high score:', error);
+      return null;
+    }
+  };
 
   const fourPicsSubmit = () => {
     if(fourPicText === fourPics1Word.word) {
@@ -49,6 +78,10 @@ export default function App() {
             // User clicked "OK", execute the following code
             setRunning(false);
             setPuzzleShow(false);
+            if(points > highPoints){
+              storeHighScore(points);
+              setHighPoints(points);
+            }
             setPoints(0);
             gameEngine.stop();
           }
@@ -147,6 +180,10 @@ export default function App() {
             // User clicked "OK", execute the following code
             setRunning(false);
             setPuzzleShow(false);
+            if(points > highPoints){
+              storeHighScore(points);
+              setHighPoints(points);
+            }
             setPoints(0);
             gameEngine.stop();
             // Reset the rows state
@@ -178,6 +215,7 @@ export default function App() {
   return (
     <View className="flex-1 bg-white">
       <Text className="z-10 text-center text-3xl font-bold mt-10">{points}</Text>
+      <Text className="z-10 text-center text-lg font-bold text-gray-600">Highscore: {highPoints}</Text>
       <GameEngine
       ref={(ref) => {setGameEngine(ref)}}
       systems={[Physics]} 
@@ -188,6 +226,10 @@ export default function App() {
           case 'game_over':
             setRunning(false)
             gameEngine.stop()
+            if(points > highPoints){
+              storeHighScore(points);
+              setHighPoints(points);
+            }
             setPoints(0)
             break;
           case 'new_point':
@@ -221,7 +263,7 @@ export default function App() {
         </View> : null
       }
       {puzzleShow === 'wordle' ? 
-      <View className="absolute top-44 left-6 transform flex justify-center items-center bg-[#e3ac5f] w-96 h-2/3">
+      <View className="absolute top-44 left-6 transform flex justify-center items-center bg-[#e3ac5f] w-[90%] h-[72%]">
         <Text className="font-bold text-xl mt-2">Wordle</Text>
         <View className="self-stretch h-[100px] mt-5">
           {rows.map((row, i) => (
@@ -239,12 +281,12 @@ export default function App() {
         </View>
         <Keyboard onKeyPressed={onKeyPressed} greenCaps={greenCaps} yellowCaps={yellowCaps} greyCaps={greyCaps}/>
       </View> : puzzleShow === '4word1pic' ?
-      <View className="absolute top-44 left-6 transform flex items-center bg-[#e3ac5f] w-96 h-2/3">
+      <View className="absolute top-40 left-5 transform flex items-center bg-[#e3ac5f] w-[90%] h-2/3">
         <Text className="font-bold text-xl mt-6">4 Pics 1 Word</Text>
         <Image source={fourPics1Word.picture} className='mt-20 w-60 h-60'/>
         <TextInput
           placeholder="Type your answer" className='mt-8 w-[70%] text-3xl bg-red-100 rounded-xl' onChangeText={(text) => setFourPicText(text.toLowerCase())}/>
-        <TouchableOpacity className="bg-white px-8 py-3 absolute bottom-6" onPress={() => {
+        <TouchableOpacity className="bg-white absolute bottom-6 rounded-full px-3" onPress={() => {
             fourPicsSubmit();
           }}>
             <Text className="font-bold text-black text-3xl">Submit</Text>

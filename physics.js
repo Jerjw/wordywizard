@@ -2,7 +2,6 @@ import { Dimensions } from 'react-native'
 import Matter from "matter-js";
 import { generateRandomNumber, getPipeSizePosPair } from "./utils/random";
 
-const windowHeight = Dimensions.get('window').height
 const windowWidth = Dimensions.get('window').width
 
 const Physics = (entities, {touches, time, dispatch}) => {

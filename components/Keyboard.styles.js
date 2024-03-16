@@ -1,7 +1,7 @@
 import { StyleSheet, Dimensions } from "react-native";
 import { keys, colors } from "../constants";
 
-export const keyWidth = (384 - 10) / keys[0].length;
+export const keyWidth = (360 - 10) / keys[0].length;
 const keyHeight = keyWidth * 1.3;
 
 export default StyleSheet.create({
